@@ -24,9 +24,7 @@ for(let i = 0; i < urlsToTest.length; i++){
             fs.appendFileSync('broken-images.csv', `${imageUrl},${pageUrl}\r\n`);
             console.log(i + " : " + urlsToTest.length);
         }).catch((err) => {
-            console.log('err: ' + err);
-            fs.appendFileSync('broken-images.csv', `${imageUrl},${pageUrl}\r\n`);
-            console.log(i + " : " + urlsToTest.length);
+            // do something !
         });
     });
 }
