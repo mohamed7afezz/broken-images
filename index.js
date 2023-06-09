@@ -11,14 +11,12 @@ var xmlData = convert.xml2json(xml, {
 let urlsToTest = JSON.parse(xmlData).urlset.url;
 for(let i = 0; i < urlsToTest.length; i++){ 
     const pageUrl = urlsToTest[i].loc._text; 
-    console.log('page url: ' + pageUrl);
     const images = urlsToTest[i]['image:image'];
     if(!images)
     {
         continue;
     }
     Array.from(images).map(item => item['image:loc']._text).forEach(imageUrl => {
-        console.log('image: url' + imageUrl);
         fetch(imageUrl).then((res) => {
             if (res.status == 200) {
                 return;
@@ -26,7 +24,9 @@ for(let i = 0; i < urlsToTest.length; i++){
             fs.appendFileSync('broken-images.csv', `${imageUrl},${pageUrl}\r\n`);
             console.log(i + " : " + urlsToTest.length);
         }).catch((err) => {
-            console.log('err: ' + err)
+            console.log('err: ' + err);
+            fs.appendFileSync('broken-images.csv', `${imageUrl},${pageUrl}\r\n`);
+            console.log(i + " : " + urlsToTest.length);
         });
     });
 }
