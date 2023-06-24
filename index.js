@@ -9,6 +9,18 @@ var xmlData = convert.xml2json(xml, {
 });
 
 let urlsToTest = JSON.parse(xmlData).urlset.url;
+
+const tasks = [];
+let completedTasks = 0;
+
+function checkIfComplete() {
+    completedTasks++;
+    console.log(completedTasks + ' completed ! from: ' + tasks.length);
+    if (completedTasks == tasks.length) {
+        console.log('finished');
+    }
+}
+
 for(let i = 0; i < urlsToTest.length; i++){ 
     const pageUrl = urlsToTest[i].loc._text; 
     const images = urlsToTest[i]['image:image'];
@@ -16,15 +28,40 @@ for(let i = 0; i < urlsToTest.length; i++){
     {
         continue;
     }
-    Array.from(images).map(item => item['image:loc']._text).forEach(imageUrl => {
-        fetch(imageUrl).then((res) => {
-            if (res.status == 200) {
-                return;
+    const imagesUrl = Array.from(images).map(item => item['image:loc']._text);
+    imagesUrl.forEach(imageUrl => {
+        const task = (function(imageUrl){
+            return function(){
+                fetch(imageUrl).then((res) => {
+                    if (res.status == 404) {
+                        fs.appendFile('broken-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
+                            if(err) {
+                                console.log('can not append!');
+                            }
+                        });
+                        return;
+                    }
+                    fs.appendFile('good-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
+                            if(err) {
+                                console.log('can not append!');
+                            }
+                        });
+                    console.log(i + " : " + urlsToTest.length);
+                }).catch((err) => {
+                    fs.appendFile('catch-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
+                        if(err) {
+                            console.log('can not append!');
+                        }
+                    });
+                }).finally(() => {
+                    checkIfComplete();
+                });
             }
-            fs.appendFileSync('broken-images.csv', `${imageUrl},${pageUrl}\r\n`);
-            console.log(i + " : " + urlsToTest.length);
-        }).catch((err) => {
-            // do something !
-        });
+        })(imageUrl);
+        tasks.push(task);
     });
+}
+
+for (var index in tasks) {
+    tasks[index](); 
 }
