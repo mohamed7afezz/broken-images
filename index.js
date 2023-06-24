@@ -1,6 +1,7 @@
 const fs = require('fs');
 var convert = require('xml-js');
 const fetch = require('cross-fetch');
+const { exit } = require('process');
 
 var xml = fs.readFileSync('./imagesitemap.xml', { encoding: 'utf8', flag: 'r' });
 var xmlData = convert.xml2json(xml, {
@@ -18,6 +19,7 @@ function checkIfComplete() {
     console.log(completedTasks + ' completed ! from: ' + tasks.length);
     if (completedTasks == tasks.length) {
         console.log('finished');
+        exit(0);
     }
 }
 
@@ -34,25 +36,12 @@ for(let i = 0; i < urlsToTest.length; i++){
             return function(){
                 fetch(imageUrl).then((res) => {
                     if (res.status == 404) {
-                        fs.appendFile('broken-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
-                            if(err) {
-                                console.log('can not append!');
-                            }
-                        });
+                        fs.appendFile('broken-images.csv', `${imageUrl},${pageUrl}\r\n`, appedFileHandler);
                         return;
                     }
-                    fs.appendFile('good-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
-                            if(err) {
-                                console.log('can not append!');
-                            }
-                        });
-                    console.log(i + " : " + urlsToTest.length);
-                }).catch((err) => {
-                    fs.appendFile('catch-images.csv', `${imageUrl},${pageUrl}\r\n`, (err) => {
-                        if(err) {
-                            console.log('can not append!');
-                        }
-                    });
+                    fs.appendFile('good-images.csv', `${imageUrl},${pageUrl}\r\n`, appedFileHandler);
+                }).catch(() => {
+                    fs.appendFile('catch-images.csv', `${imageUrl},${pageUrl}\r\n`,appedFileHandler);
                 }).finally(() => {
                     checkIfComplete();
                 });
@@ -64,4 +53,10 @@ for(let i = 0; i < urlsToTest.length; i++){
 
 for (var index in tasks) {
     tasks[index](); 
+}
+
+function appedFileHandler (err) {
+    if(err) {
+        console.log('can not append!');
+    }
 }
